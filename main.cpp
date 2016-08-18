@@ -7,12 +7,24 @@ struct tuple;
 
 template<>
 struct tuple<>{
+	tuple<>& operator=(tuple<>& src) {
+		return *this;
+	}
 };
 
 template<class T, class...Ts>
 struct tuple<T, Ts...> : tuple<Ts...>{
 	T field;
 	tuple<T, Ts...>(T t, Ts... args) : field(t), tuple<Ts...>(args...) {}
+
+	template<class T1, class...Ts1>
+	tuple<T, Ts...>& operator=(tuple<T1, Ts1...>& src) {
+		this->field = src.field;
+		tuple<Ts...>& base = *this;
+		tuple<Ts1...>& base_src = src;
+		base = base_src;
+		return *this;
+	}
 };
 
 template<uint k, class Tuple>
@@ -50,15 +62,17 @@ typename placeholder<k, tuple<Ts...>>::type& get(tuple<Ts...>& t) {
 	return tget<k, Ts...>::get(t);
 }
 
-int main() {
-	tuple<int, char, double, std::vector<int>> t(1, 'a', 1.0, std::vector<int>(10));
-	placeholder<0, tuple<int, char, double>>::type a = 2;
-	placeholder<1, tuple<int, char, double>>::type b = 'a';
-	placeholder<2, tuple<int, char, double>>::type c = 2.0;
+template<class... Ts> 
+typename tuple<Ts&...> tie(Ts&... ts) {
+	return tuple<Ts&...>(ts...);
+}
 
-	get<0>(t) = 20;
-	get<1>(t) = '3';
-	get<2>(t) = 34.23;
-	get<3>(t) = std::vector<int>(100, 4);
+
+int main() {
+	tuple<int, double, char> c(1, 1.0, 'b');
+	int a;
+	double b;
+	char g;
+	tie(a, b, g) = c;
 	return 0;
 }
